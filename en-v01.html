@@ -1,0 +1,953 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Search Directory</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the app. The primary color is #df1783 */
+         /* Replace your current :root styles with these */
+    :root {
+        --primary: #DF1783;
+        --primary-light: #f8a4d4;
+        --secondary: #2d3748;
+        --accent: #4fd1c5;
+        --text: #2d3748;
+        --text-light: #f7fafc;
+        --bg: #f7fafc;
+        --card-bg: #ffffff;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --border-color: #e2e8f0;
+    }
+
+    /* Updated from .dark-mode to .dark to match Tailwind's convention and the JS implementation */
+    .dark {
+        --primary: #DF1783;
+        --primary-light: #4a1a38;
+        --secondary: #1e2837;
+        --accent: #4fd1c5;
+        --text: #f7fafc;
+        --text-light: #2d3748;
+        --bg: #1a202c;
+        --card-bg: #2d3748;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        --border-color: #4a5568;
+    }
+    
+      body {
+        background-color: var(--bg);
+        color: var(--text);
+    }
+  
+        .text-primary {
+            color: var(--primary);
+        }
+        
+        .bg-primary {
+            background-color: var(--primary);
+        }
+        
+        .border-primary {
+            border-color: var(--primary);
+        }
+        
+        .hover-bg-primary:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .job-card {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .list-view-card {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+        
+        @media (min-width: 768px) {
+            .list-view-card {
+                grid-template-columns: 2fr 3fr 1fr;
+            }
+        }
+        .list-view .job-card-grid-content {
+            display: none;
+        }
+        .grid-view .job-card-list-content {
+            display: none;
+        }
+        /* Style for the scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #718096;
+        }
+        /* Collapsible content animation */
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .collapsible-content.expanded {
+            max-height: 1000px; /* A large value to allow for expansion */
+            transition: max-height 0.5s ease-in;
+        }
+    </style>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col transition-colors duration-300">
+
+    <!-- Theme Toggle Floating Button -->
+    <button id="theme-toggle" class="fixed top-4 left-4 p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg z-50 transition-transform transform hover:scale-110 focus:outline-none">
+        <i data-lucide="moon" class="w-6 h-6 text-gray-800 dark:hidden"></i>
+        <i data-lucide="sun" class="w-6 h-6 text-yellow-400 hidden dark:block"></i>
+    </button>
+
+    <!-- Main Content Container -->
+    <div class="container mx-auto p-4 md:p-8 flex-grow">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-2">Job Search Directory</h1>
+            <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400">Find the best remote job and freelance sources.</p>
+        </header>
+
+        <!-- Search, View Controls, and Add button -->
+        <div class="flex flex-col md:flex-row items-center justify-center md:justify-between mb-8 space-y-4 md:space-y-0">
+            <!-- Search Bar Container -->
+            <div class="relative w-full md:w-2/3 mx-auto">
+                <input type="text" id="search-bar" placeholder="Search for a website, tag or description..." class="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500"></i>
+            </div>
+            <!-- View Buttons -->
+            <div class="flex items-center space-x-2 md:mt-0">
+                <button id="grid-view-btn" class="p-2 rounded-full bg-primary text-white shadow-md focus:outline-none hover-bg-primary transition-all duration-300">
+                    <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                </button>
+                <button id="list-view-btn" class="p-2 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300 shadow-md focus:outline-none hover:bg-gray-400 dark:hover:bg-gray-500 transition-all duration-300">
+                    <i data-lucide="list" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Tags -->
+        <div id="tag-container" class="flex flex-wrap gap-2 justify-center mb-8">
+            <!-- Tags will be dynamically populated here -->
+        </div>
+
+        <!-- Job Listings Container -->
+        <div id="job-listings-container" class="grid-view grid gap-6 transition-all duration-300">
+            <!-- Job cards will be dynamically populated here -->
+        </div>
+
+    </div>
+
+    <!-- Floating Add New Button -->
+    <button id="add-new-btn" class="fixed bottom-8 right-8 p-4 bg-primary text-white rounded-full shadow-lg z-50 transition-transform transform hover:scale-110 focus:outline-none">
+        <i data-lucide="plus" class="w-8 h-8"></i>
+    </button>
+
+    <!-- Modal for adding new data -->
+    <div id="add-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Admin Access</h2>
+                <button id="modal-close-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                    <input type="text" id="username" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary focus:ring-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                    <input type="password" id="password" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary focus:ring-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 rounded-md text-white bg-primary hover-bg-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300">Log In</button>
+                <p id="login-message" class="text-center text-sm font-medium"></p>
+            </form>
+
+            <!-- Data Entry Form (hidden by default) -->
+            <div id="data-entry-container" class="hidden">
+                <form id="add-data-form" class="space-y-4">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Add New Entry</h3>
+                    <div>
+                        <label for="website" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Website</label>
+                        <input type="text" id="website" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
+                    </div>
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                        <textarea id="description" rows="3" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required></textarea>
+                    </div>
+                    <div>
+                        <label for="remote-jobs" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remote Jobs</label>
+                        <input type="text" id="remote-jobs" placeholder="Yes/No/N/A" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="target-audience" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Target Audience</label>
+                        <input type="text" id="target-audience" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="qualifications" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Qualifications</label>
+                        <input type="text" id="qualifications" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-300">URL</label>
+                        <input type="url" id="url" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
+                    </div>
+                    <div>
+                        <label for="reliability-indicators" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Reliability Indicators</label>
+                        <textarea id="reliability-indicators" rows="2" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></textarea>
+                    </div>
+                    <div>
+                        <label for="potential-risks" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Potential Risks</label>
+                        <textarea id="potential-risks" rows="2" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></textarea>
+                    </div>
+                    <div>
+                        <label for="how-to-get-paid" class="block text-sm font-medium text-gray-700 dark:text-gray-300">How to Get Paid</label>
+                        <textarea id="how-to-get-paid" rows="2" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></textarea>
+                    </div>
+                    <div>
+                        <label for="application-requirements" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Application Requirements</label>
+                        <textarea id="application-requirements" rows="2" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></textarea>
+                    </div>
+                    <div class="flex items-center pt-2">
+                        <input type="checkbox" id="is-recommended" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
+                        <label for="is-recommended" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Mark as Recommended</label>
+                    </div>
+                    <div>
+                        <label for="new-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags</label>
+                        <div id="selected-tags-container" class="flex flex-wrap gap-2 mt-1 mb-2"></div>
+                        <input type="text" id="new-tags" placeholder="Add new tags, separated by commas" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-2">Or select existing tags:</label>
+                        <div id="existing-tags-container" class="flex flex-wrap gap-2 mt-1 max-h-24 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
+                            <!-- Existing tags will be populated here by JS -->
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-2 px-4 rounded-md text-white bg-primary hover-bg-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300">Add Entry</button>
+                </form>
+
+                <div class="my-6 text-center text-gray-500 dark:text-gray-400">
+                    <p>or</p>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Bulk Upload (CSV)</h3>
+                    <div>
+                        <label for="csv-upload" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload CSV File</label>
+                        <input type="file" id="csv-upload" accept=".csv" class="mt-1 block w-full text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/80 transition-all duration-200">
+                    </div>
+                    <button id="upload-csv-btn" class="w-full py-2 px-4 rounded-md text-white bg-primary hover-bg-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300">Upload CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Data from the user's prompt
+        const comprehensiveJobSources = {
+            'Website': [
+                'Virtual Latinos', 'Remote Latinos', 'Freelance Latin America', 'South (HireInSouth)', 'HireLATAM',
+                'Working Nomads', 'Remote.co', 'We Work Remotely', 'RemoteOK', 'FlexJobs', 'Upwork', 'Fiverr',
+                'Workana', 'Get on Board', 'Dynamite Jobs', 'Toptal', 'Guru', '99designs', 'PeoplePerHour',
+                'Freelancer.com', 'AngelList', 'Indeed', 'Pros Marketplace', 'Somewhere', 'TaskRabbit',
+                'Contra', 'Gun.io', 'Payoneer', 'Wise', 'Remote Rocketship'
+            ],
+            'Description': [
+                'Recruitment platform connecting US/Canada companies with bilingual virtual assistants from Latin America',
+                'Elite talent marketplace connecting businesses with top Latin American professionals at 80% cost savings',
+                'Fully managed remote staffing agency providing bilingual college-educated talent from LATAM',
+                'Platform helping companies find, hire, and pay top Latin American talent with 21-day hiring process',
+                'Facilitates connections between US companies and pre-vetted remote professionals in various fields',
+                'Global remote job board with Latin America specific listings and digital-based roles',
+                'Curated remote job listings platform focusing on legitimate remote opportunities worldwide',
+                'Large remote job board connecting talent with remote-first companies globally',
+                'Real-time remote job aggregator with global listings including Latin America positions',
+                'Premium subscription-based job board specializing in flexible and remote work opportunities',
+                'Global freelance marketplace with project-based and hourly work across all categories',
+                'Gig-based marketplace offering fixed-price services starting from $5 across creative fields',
+                'Latin America-focused freelance marketplace for Spanish/Portuguese speaking professionals',
+                'Curated tech and startup job community primarily serving Latin American markets',
+                'Remote job platform offering vetted opportunities with salary transparency in LATAM',
+                'Elite freelance network accepting only top 3% of applicants for high-end projects',
+                'Freelance platform with workroom features for project management and collaboration',
+                'Design-focused platform specializing in creative work through contests and direct hiring',
+                'UK-based platform popular in Europe combining hourly services and project bidding',
+                'Global freelance marketplace with bidding system and milestone-based payments',
+                'Startup-focused platform connecting companies with tech talent and remote opportunities',
+                'Traditional job board with remote work listings and salary estimation tools',
+                'Platform specifically for hiring remote LATAM workers with resume browsing and job posting',
+                'Headhunter agency for finding overseas and nearshore talent with up to 70% cost savings',
+                'Local services marketplace for handyman tasks, limited Latin America presence',
+                'Commission-free freelance network with portfolio-focused approach and crypto payments',
+                'Invitation-only elite developer network with personalized matching and high hourly rates',
+                'Cross-border payment platform connecting freelancers to local bank networks in 150+ countries',
+                'Multi-currency money transfer service with low fees for international payments',
+                'Remote job platform with salary transparency and worldwide opportunities'
+            ],
+            'Remote_Jobs': [
+                'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes',
+                'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes',
+                'Yes', 'Yes', 'Yes', 'Yes', 'Limited', 'Yes', 'Yes', 'N/A', 'N/A', 'Yes'
+            ],
+            'Target_Audience': [
+                'US/Canada companies hiring Latin American VAs', 'Global businesses seeking Latin American talent',
+                'US/Canada SMBs and agencies needing bilingual staff', 'Companies wanting Latin American developers/professionals',
+                'US companies hiring marketing, finance, tech professionals', 'Digital nomads and remote workers globally',
+                'Remote job seekers and companies worldwide', 'Remote-first companies and job seekers globally',
+                'Global remote workers and companies', 'Professionals seeking flexible work arrangements',
+                'Global freelancers and businesses', 'Creative professionals and service buyers globally',
+                'Latin American freelancers and Spanish-speaking markets', 'Tech professionals in Latin America',
+                'Remote workers in Latin America', 'Elite freelancers and high-budget clients',
+                'Freelancers and businesses needing project management', 'Designers and creative businesses',
+                'European professionals and businesses', 'Global freelancers and project buyers',
+                'Startups and tech companies', 'Job seekers and employers globally',
+                'Companies hiring specifically LATAM workers', 'Businesses seeking nearshore talent',
+                'Local service needs (limited LATAM)', 'Independent professionals and creative teams',
+                'Elite software developers and premium clients', 'Freelancers receiving international payments',
+                'International money transfer users', 'Global remote job seekers'
+            ],
+            'Qualifications': [
+                'Bilingual (English/Spanish), 2+ years experience, C1 English level, college preferred',
+                'Industry-specific skills, English proficiency, relevant work experience',
+                'College-educated, bilingual, professional experience in specific areas',
+                'Technical skills, English proficiency, relevant experience, portfolio',
+                'Specific role qualifications, English proficiency, professional experience',
+                'Digital skills, remote work experience, portfolio/credentials',
+                'Varies by role, often requires professional experience and skills',
+                'Role-specific qualifications, remote work capability',
+                'Varies by position, often technical or professional experience required',
+                'Professional qualifications, paid subscription required for access',
+                'Skills-based, portfolio, reviews from previous work, varies by project',
+                'Creative skills, portfolio, ability to deliver fixed-scope services',
+                'Spanish/Portuguese fluency, relevant professional skills',
+                'Tech skills, startup experience preferred, bilingual often required',
+                'Professional experience, often tech-focused qualifications',
+                'Top 3% talent, rigorous screening, technical tests, extensive experience',
+                'Professional skills, portfolio, ability to work in collaborative environment',
+                'Design portfolio, creative skills, contest participation capability',
+                'Professional skills, European market knowledge preferred',
+                'Skills demonstration, portfolio, bidding capability',
+                'Startup experience, tech skills, often equity-focused roles',
+                'Varies by job posting, traditional employment qualifications',
+                'LATAM residence, professional skills, bilingual often preferred',
+                'Specific role qualifications, nearshore/offshore experience',
+                'Local presence required, handyman/service skills',
+                'Portfolio, 16+ years old, valid ID for verification',
+                'Invitation-only, exceptional skills, extensive experience, top-tier developers',
+                'N/A - Payment platform', 'N/A - Payment platform',
+                'Professional qualifications, remote work capability'
+            ],
+            'URL': [
+                'virtuallatinos.com', 'remotelatinos.com', 'freelancelatam.com', 'hireinsouth.com',
+                'hirelatam.com', 'workingnomads.com', 'remote.co', 'weworkremotely.com',
+                'remoteok.com', 'flexjobs.com', 'upwork.com', 'fiverr.com', 'workana.com',
+                'getonbrd.com', 'dynamitejobs.com', 'toptal.com', 'guru.com', '99designs.com',
+                'peopleperhour.com', 'freelancer.com', 'angel.co', 'indeed.com',
+                'prosmarketplace.com', 'somewhere.com', 'taskrabbit.com', 'contra.com',
+                'gun.io', 'payoneer.com', 'wise.com', 'remoterocketship.com'
+            ],
+            'Reliability_Indicators': [
+                'Established platform, English testing, client testimonials',
+                'Vetted talent, client success stories, transparent pricing',
+                'Fully managed service, 7+ years operation, 80+ satisfied customers',
+                '21-day hiring process, team-based approach, established reputation',
+                'Pre-vetted candidates, 90-day replacement guarantee, established process',
+                'Curated listings, global reach, established platform',
+                'Hand-screened jobs, legitimate remote focus, established reputation',
+                'Trusted by major brands, high job volume, established platform',
+                'Real-time updates, global reach, high traffic volume',
+                'Paid subscription model, job verification, established since 2007',
+                'Large user base, review system, escrow payments, established platform',
+                'Established platform, review system, payment protection',
+                'Regional focus, established in LATAM market, local payment support',
+                'Tech-focused, regional reputation, curated listings',
+                'Salary transparency, vetted opportunities, emerging platform',
+                'Rigorous screening, top 3% acceptance, premium reputation',
+                'Workroom features, established platform, collaborative tools',
+                'Design specialization, contest model, established reputation',
+                'UK-based, European focus, certification system',
+                'Large global platform, milestone payments, established system',
+                'Startup focus, tech reputation, venture capital backing',
+                'Major job board, wide reach, established brand',
+                'LATAM-specific focus, browse-based hiring',
+                'Salary guides, specialized focus, headhunter reputation',
+                'IKEA acquisition, major platform, local service focus',
+                'Commission-free model, emerging platform, portfolio focus',
+                'Invitation-only, elite reputation, developer-founded',
+                '150+ country support, established payment platform',
+                'Low fees, multi-currency, established money transfer service',
+                'Salary transparency, global reach, comprehensive listings'
+            ],
+            'Potential_Risks': [
+                'Competition for positions, English requirement barriers',
+                'High standards may limit opportunities, cost considerations for employers',
+                'Monthly fees, limited flexibility in hiring terms',
+                'Limited to specific regions, 21-day process may be slow',
+                '90-day trial period, specific role limitations',
+                'Competition from global talent pool',
+                'Subscription-based access limitations, geographic restrictions',
+                'High competition, $299 posting fee for employers',
+                'High competition, quality varies across listings',
+                'Paid subscription required, limited free access',
+                'Platform fees, high competition, rate pressure',
+                'Race to bottom pricing, high competition',
+                'Regional limitations, language barriers for non-Spanish speakers',
+                'Limited to tech roles, regional focus',
+                'Smaller platform, limited job volume',
+                'Extremely competitive, high skill requirements, expensive rates',
+                'Platform fees, competition',
+                'Contest model risks, specialized focus',
+                'European focus may limit global opportunities',
+                'Platform fees, bidding competition, payment delays',
+                'Startup volatility, equity-heavy compensation',
+                'Competition, application volume, not remote-specific',
+                'Smaller platform, limited job variety',
+                'Less established platform, limited scale',
+                'Very limited Latin America presence',
+                'Portfolio dependency, newer platform, Pro subscription for full features',
+                'Invitation-only access, extremely high standards',
+                'Transfer fees, currency conversion costs',
+                'Transfer fees, regulatory limitations in some countries',
+                'Platform competition, varying job quality'
+            ],
+            'How_to_Get_Paid': [
+                'Wise, Payoneer, PayPal, Uphold - bi-weekly payments via Virtual Latinos',
+                'Direct payment through company, 80% cost savings model',
+                'Single monthly payment through bill.com, ACH, or bank transfer',
+                'Direct payment, market pay rates, monthly fee model',
+                'Direct payment to freelancer, various international methods',
+                'Direct employer payment, varies by job posting',
+                'Direct employer payment, varies by company',
+                'Direct employer payment, application-based',
+                'Direct employer payment, varies by company',
+                'Direct employer contact and payment, subscription model',
+                'Upwork payment system, weekly transfers, PayPal/bank',
+                'Fiverr payment system, PayPal, bank transfer, 14-day hold',
+                'Platform payment system, various local methods',
+                'Direct employer payment, varies by company',
+                'Direct employer payment, transparent salary information',
+                'Platform managed, high hourly rates ($100-200/hr), weekly payments',
+                'Guru payment system, SafePay escrow, various withdrawal methods',
+                'Platform payment after contest completion or project delivery',
+                'Platform payment system, various withdrawal options',
+                'Milestone payments, PayPal, Skrill, Payoneer, bank transfer',
+                'Direct employer payment, often equity + salary',
+                'Direct employer payment, varies by company',
+                'Direct employer payment, platform facilitates',
+                'Direct employer payment, platform managed',
+                'TaskRabbit payment system, weekly payouts, direct deposit',
+                'Direct payment, no commission, fiat currency or USDC crypto',
+                'Platform managed, $100-200/hr typical, high-end rates',
+                'International transfers to 150+ countries, multi-currency',
+                'International transfers, low fees, mid-market rates',
+                'Direct employer payment, varies by company'
+            ],
+            'Application_Requirements': [
+                'EF SET English test (C1 level), valid ID, 2+ years experience, high school minimum',
+                'Skills assessment, portfolio review, interview process',
+                'Application review, skills verification, cultural fit assessment',
+                'Technical skills assessment, portfolio review, interview',
+                'Application screening, skills verification, background check',
+                'Resume/portfolio submission, direct application to employers',
+                'Direct application to posted jobs, varies by employer',
+                'Application through job posting, employer-specific requirements',
+                'Direct application to companies, resume and portfolio',
+                'Paid subscription, application through platform',
+                'Profile creation, skills tests, portfolio, proposal writing',
+                'Profile setup, gig creation, portfolio showcase',
+                'Profile creation, Spanish/Portuguese proficiency, portfolio',
+                'CV submission, tech skills demonstration, portfolio',
+                'Application through platform, qualifications review',
+                'Rigorous screening: skills test, technical interview, project review',
+                'Profile creation, skills demonstration, work history',
+                'Portfolio submission, contest participation, design skills',
+                'Profile creation, skills certification, work samples',
+                'Profile setup, skills tests, bidding on projects',
+                'Application through job postings, startup ecosystem networking',
+                'Resume upload, direct application to jobs',
+                'Resume browsing by employers, $79 job posting fee',
+                'Application review, skills assessment, cultural fit',
+                'Background check, skill verification, local market presence',
+                'Portfolio creation, valid ID verification, 16+ years old',
+                'Invitation-only, exceptional skill demonstration, technical interview',
+                'N/A - Payment service registration', 'N/A - Money transfer service registration',
+                'Resume submission, direct application to posted jobs'
+            ]
+        };
+
+        // Convert the object of arrays into an array of objects for easier handling
+        let jobs = comprehensiveJobSources.Website.map((website, index) => {
+            const entry = {};
+            for (const key in comprehensiveJobSources) {
+                entry[key] = comprehensiveJobSources[key][index];
+            }
+            return entry;
+        });
+
+        // Function to process and assign tags for a job entry
+        function processTags(job) {
+            const tags = new Set(job.Tags || []);
+            const lowercaseWebsite = job.Website.toLowerCase();
+            const lowercaseDescription = job.Description.toLowerCase();
+            const lowercaseQualifications = (job.Qualifications || '').toLowerCase();
+            
+            if (lowercaseDescription.includes('latin america') || lowercaseDescription.includes('latam') || lowercaseWebsite.includes('latinos') || lowercaseWebsite.includes('latam')) {
+                tags.add('LATAM Focus');
+            }
+            if (lowercaseWebsite.includes('freelance') || ['upwork', 'fiverr', 'toptal', 'guru', '99designs', 'peopleperhour', 'workana', 'contra'].some(f => lowercaseWebsite.includes(f))) {
+                tags.add('Freelance');
+            }
+            if (lowercaseWebsite.includes('gun.io') || lowercaseWebsite.includes('toptal') || lowercaseWebsite.includes('angel') || lowercaseDescription.includes('tech') || lowercaseDescription.includes('developer') || lowercaseWebsite.includes('get on board')) {
+                tags.add('Tech');
+            }
+            if (lowercaseWebsite.includes('payoneer') || lowercaseWebsite.includes('wise')) {
+                tags.add('Payment Platform');
+            }
+            if (lowercaseQualifications.includes('english') || lowercaseDescription.includes('english') || lowercaseQualifications.includes('bilingual')) {
+                tags.add('English');
+            }
+            if (lowercaseQualifications.includes('spanish') || lowercaseDescription.includes('spanish') || lowercaseQualifications.includes('portuguese') || lowercaseQualifications.includes('bilingual')) {
+                tags.add('Spanish');
+            }
+            job.Tags = Array.from(tags);
+        }
+
+        // Add tags to each job entry
+        jobs.forEach(processTags);
+
+        // Add recommended badges to top sources
+        jobs[0].isRecommended = true; // Virtual Latinos
+        jobs[1].isRecommended = true; // Remote Latinos
+        jobs[10].isRecommended = true; // Upwork
+
+
+        // DOM element references
+        const searchBar = document.getElementById('search-bar');
+        const jobListingsContainer = document.getElementById('job-listings-container');
+        const gridViewBtn = document.getElementById('grid-view-btn');
+        const listViewBtn = document.getElementById('list-view-btn');
+        const tagContainer = document.getElementById('tag-container');
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const addModal = document.getElementById('add-modal');
+        const addNewBtn = document.getElementById('add-new-btn');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const loginForm = document.getElementById('login-form');
+        const dataEntryContainer = document.getElementById('data-entry-container');
+        const modalTitle = document.getElementById('modal-title');
+        const loginMessage = document.getElementById('login-message');
+        const addDataForm = document.getElementById('add-data-form');
+        const csvUploadInput = document.getElementById('csv-upload');
+        const uploadCsvBtn = document.getElementById('upload-csv-btn');
+        const existingTagsContainer = document.getElementById('existing-tags-container');
+        const selectedTagsContainer = document.getElementById('selected-tags-container');
+
+        let currentView = 'grid'; // 'grid' or 'list'
+        let activeFilter = 'All';
+        let modalSelectedTags = new Set();
+
+        // Function to create an HTML element with classes and content
+        function createElement(tag, classes = [], content = '') {
+            const el = document.createElement(tag);
+            el.classList.add(...classes);
+            if (typeof content === 'string') {
+                el.innerHTML = content;
+            } else if (content) {
+                el.appendChild(content);
+            }
+            return el;
+        }
+
+        // Function to render the job listings
+        function renderJobs(filteredJobs) {
+            jobListingsContainer.innerHTML = ''; // Clear existing content
+            jobListingsContainer.classList.remove('grid-view', 'list-view');
+            jobListingsContainer.classList.add(`${currentView}-view`);
+            
+            if (currentView === 'grid') {
+                jobListingsContainer.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
+            } else {
+                jobListingsContainer.classList.remove('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
+            }
+
+            if (filteredJobs.length === 0) {
+                const noResults = createElement('p', ['text-center', 'text-gray-500', 'dark:text-gray-400', 'text-xl', 'col-span-full', 'py-10'], 'No results found.');
+                jobListingsContainer.appendChild(noResults);
+                return;
+            }
+
+            filteredJobs.forEach(job => {
+                const card = createElement('div', ['job-card', 'rounded-xl', 'shadow-md', 'p-6', 'flex', 'flex-col', 'border', 'transition-all', 'duration-300']);
+
+                // --- Grid View Content ---
+                const gridContent = createElement('div', ['job-card-grid-content', 'space-y-4']);
+                const headerContainer = createElement('div', ['flex', 'items-center', 'justify-between']);
+                const titleGroup = createElement('div', ['flex', 'items-center', 'min-w-0']);
+                const icon = createElement('div', ['flex-shrink-0'], `<i data-lucide="building-2" class="w-6 h-6 text-primary mr-3"></i>`);
+                const titleContent = createElement('div', ['min-w-0']);
+                const gridTitle = createElement('h2', ['text-xl', 'font-bold', 'text-gray-900', 'dark:text-gray-100', 'truncate'], job.Website);
+                
+                titleContent.appendChild(gridTitle);
+                titleGroup.appendChild(icon);
+                titleGroup.appendChild(titleContent);
+                headerContainer.appendChild(titleGroup);
+
+                if (job.isRecommended) {
+                    const badge = createElement('img');
+                    badge.src = 'https://bucket.mlcdn.com/a/3336/3336910/images/596d184d246afd7cd39f546aa38386ee16ef4e5f.png';
+                    badge.alt = 'Recommended Source';
+                    badge.className = 'w-10 h-10 object-contain ml-3 flex-shrink-0';
+                    headerContainer.appendChild(badge);
+                }
+                
+                const description = createElement('p', ['text-gray-600', 'dark:text-gray-300', 'text-sm'], job.Description);
+                const tagsContainer = createElement('div', ['flex', 'flex-wrap', 'gap-2']);
+                (job.Tags || []).forEach(tag => {
+                    const tagEl = createElement('span', ['px-2', 'py-1', 'text-xs', 'font-semibold', 'bg-gray-200', 'dark:bg-gray-600', 'text-gray-600', 'dark:text-gray-300', 'rounded-full'], tag);
+                    tagsContainer.appendChild(tagEl);
+                });
+                gridContent.appendChild(headerContainer);
+                gridContent.appendChild(description);
+                gridContent.appendChild(tagsContainer);
+
+                // --- List View Content ---
+                const listContent = createElement('div', ['job-card-list-content', 'list-view-card', 'md:items-center', 'space-y-4', 'md:space-y-0', 'md:space-x-4']);
+                
+                const listTitleContainer = createElement('div', ['flex', 'items-center', 'justify-between', 'w-full']);
+                const listTitleIconGroup = createElement('div', ['flex', 'items-center', 'min-w-0']);
+
+                listTitleIconGroup.innerHTML = `<i data-lucide="building-2" class="w-5 h-5 text-primary mr-3 flex-shrink-0"></i>`;
+                const listTitleGroup = createElement('div', ['min-w-0']);
+                const listTitle = createElement('h3', ['text-lg', 'font-bold', 'text-gray-900', 'dark:text-gray-100', 'truncate'], job.Website);
+                const listUrl = createElement('a', ['text-sm', 'text-gray-500', 'dark:text-gray-400', 'hover:underline', 'truncate', 'block'], job.URL);
+                listUrl.href = `https://${job.URL}`;
+                listUrl.target = "_blank";
+                listTitleGroup.appendChild(listTitle);
+                listTitleGroup.appendChild(listUrl);
+                listTitleIconGroup.appendChild(listTitleGroup);
+                listTitleContainer.appendChild(listTitleIconGroup);
+
+                if (job.isRecommended) {
+                    const badge = createElement('img');
+                    badge.src = 'https://bucket.mlcdn.com/a/3336/3336910/images/596d184d246afd7cd39f546aa38386ee16ef4e5f.png';
+                    badge.alt = 'Recommended Source';
+                    badge.className = 'w-10 h-10 object-contain ml-3 flex-shrink-0';
+                    listTitleContainer.appendChild(badge);
+                }
+                
+                const listDescription = createElement('p', ['text-sm', 'text-gray-600', 'dark:text-gray-300'], job.Description);
+                const reliabilityTag = createElement('p', ['text-xs', 'md:text-right', 'text-gray-500', 'dark:text-gray-400', 'truncate'], job.Reliability_Indicators.split(',')[0].trim());
+                
+                listContent.appendChild(listTitleContainer);
+                listContent.appendChild(listDescription);
+                listContent.appendChild(reliabilityTag);
+                
+                // --- Collapsible Details ---
+                const detailsContainer = createElement('div', ['collapsible-content', 'mt-4', 'pt-4', 'border-t']);
+                const details = [
+                    { title: 'Target Audience', content: job.Target_Audience },
+                    { title: 'Qualifications', content: job.Qualifications },
+                    { title: 'Reliability Indicators', content: job.Reliability_Indicators },
+                    { title: 'Potential Risks', content: job.Potential_Risks },
+                    { title: 'How to Get Paid', content: job.How_to_Get_Paid },
+                    { title: 'Application Requirements', content: job.Application_Requirements },
+                ];
+                
+                details.forEach(detail => {
+                    if(detail.content && detail.content.trim() !== '' && detail.content.trim().toLowerCase() !== 'n/a'){
+                        const detailEl = createElement('div', ['mb-3']);
+                        const detailTitle = createElement('h4', ['text-sm', 'font-bold', 'text-gray-900', 'dark:text-gray-100'], detail.title);
+                        const detailContent = createElement('p', ['text-sm', 'text-gray-600', 'dark:text-gray-300'], detail.content);
+                        detailEl.appendChild(detailTitle);
+                        detailEl.appendChild(detailContent);
+                        detailsContainer.appendChild(detailEl);
+                    }
+                });
+
+                // URL Copy Feature
+                const urlContainer = createElement('div', ['mt-4', 'flex', 'items-center', 'justify-between', 'bg-gray-100', 'dark:bg-gray-800', 'p-2', 'rounded-md']);
+                const urlText = createElement('span', ['text-sm', 'text-gray-500', 'dark:text-gray-400', 'truncate', 'mr-2', 'font-mono'], `https://${job.URL}`);
+                const copyButton = createElement('button', ['p-1.5', 'rounded', 'hover:bg-gray-200', 'dark:hover:bg-gray-600', 'transition-colors']);
+                copyButton.innerHTML = '<i data-lucide="copy" class="w-4 h-4 text-gray-500 dark:text-gray-400"></i>';
+                
+                copyButton.onclick = (e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(`https://${job.URL}`).then(() => {
+                        copyButton.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-green-500"></i>';
+                        setTimeout(() => {
+                            copyButton.innerHTML = '<i data-lucide="copy" class="w-4 h-4 text-gray-500 dark:text-gray-400"></i>';
+                            lucide.createIcons();
+                        }, 2000);
+                    });
+                };
+                urlContainer.appendChild(urlText);
+                urlContainer.appendChild(copyButton);
+                detailsContainer.appendChild(urlContainer);
+                
+                const websiteButton = createElement('a', ['mt-4', 'w-full', 'inline-flex', 'items-center', 'justify-center', 'px-4', 'py-2', 'text-sm', 'font-medium', 'rounded-full', 'text-white', 'bg-primary', 'hover:bg-primary/80', 'transition-colors', 'duration-300', 'shadow-md'], 'Visit Website');
+                websiteButton.href = `https://${job.URL}`;
+                websiteButton.target = "_blank";
+                websiteButton.onclick = (e) => e.stopPropagation();
+                
+                card.appendChild(gridContent);
+                card.appendChild(listContent);
+                card.appendChild(detailsContainer);
+                
+                const footer = createElement('div', ['mt-auto', 'pt-4']);
+                footer.appendChild(websiteButton);
+                card.appendChild(footer);
+
+                card.addEventListener('click', () => {
+                    detailsContainer.classList.toggle('expanded');
+                });
+                
+                jobListingsContainer.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function filterJobs() {
+            const query = searchBar.value.toLowerCase();
+            const filtered = jobs.filter(job => {
+                const matchesSearch = job.Website.toLowerCase().includes(query) ||
+                                      job.Description.toLowerCase().includes(query) ||
+                                      ((job.Tags || []).some(tag => tag.toLowerCase().includes(query)));
+                const matchesFilter = activeFilter === 'All' || ((job.Tags || []).includes(activeFilter));
+                return matchesSearch && matchesFilter;
+            });
+            renderJobs(filtered);
+        }
+
+        // Update main tag filter buttons
+        function updateMainTagFilters() {
+            const allTags = [...new Set(jobs.flatMap(job => job.Tags || []))].sort();
+            tagContainer.innerHTML = ''; // Clear existing tags
+
+            const allButton = createElement('button', ['tag-filter', 'px-4', 'py-2', 'text-sm', 'font-semibold', 'rounded-full', 'border', 'border-gray-300', 'dark:border-gray-600'], 'All');
+            allButton.dataset.filter = 'All';
+            tagContainer.appendChild(allButton);
+
+            allTags.forEach(tag => {
+                const tagButton = createElement('button', ['tag-filter', 'px-4', 'py-2', 'text-sm', 'font-semibold', 'rounded-full', 'border', 'border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-primary', 'hover:text-white', 'transition-all', 'duration-300'], tag);
+                tagButton.dataset.filter = tag;
+                tagContainer.appendChild(tagButton);
+            });
+
+            // Re-apply active style
+            const currentActiveButton = tagContainer.querySelector(`[data-filter="${activeFilter}"]`) || allButton;
+            currentActiveButton.classList.add('bg-primary', 'text-white');
+            currentActiveButton.classList.remove('bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        }
+
+        function populateModalTags() {
+            const allTags = [...new Set(jobs.flatMap(job => job.Tags || []))].sort();
+            existingTagsContainer.innerHTML = '';
+            allTags.forEach(tag => {
+                const tagButton = createElement('button', ['px-2', 'py-1', 'text-xs', 'font-semibold', 'bg-gray-200', 'dark:bg-gray-600', 'text-gray-700', 'dark:text-gray-300', 'rounded-full', 'hover:bg-primary', 'hover:text-white', 'transition-colors'], tag);
+                tagButton.type = 'button'; // Prevent form submission
+                tagButton.addEventListener('click', () => {
+                    toggleModalTag(tag);
+                });
+                existingTagsContainer.appendChild(tagButton);
+            });
+        }
+
+        function toggleModalTag(tag) {
+            if (modalSelectedTags.has(tag)) {
+                modalSelectedTags.delete(tag);
+            } else {
+                modalSelectedTags.add(tag);
+            }
+            renderModalSelectedTags();
+        }
+
+        function renderModalSelectedTags() {
+            selectedTagsContainer.innerHTML = '';
+            modalSelectedTags.forEach(tag => {
+                const tagEl = createElement('span', ['px-2', 'py-1', 'text-xs', 'font-semibold', 'bg-primary', 'text-white', 'rounded-full', 'flex', 'items-center', 'gap-1'], tag);
+                const removeBtn = createElement('button', [], '&times;');
+                removeBtn.type = 'button';
+                removeBtn.onclick = () => toggleModalTag(tag);
+                tagEl.appendChild(removeBtn);
+                selectedTagsContainer.appendChild(tagEl);
+            });
+        }
+
+        // Event Listeners Setup
+        function setupEventListeners() {
+            searchBar.addEventListener('input', filterJobs);
+
+            gridViewBtn.addEventListener('click', () => {
+                currentView = 'grid';
+                gridViewBtn.classList.add('bg-primary', 'text-white');
+                gridViewBtn.classList.remove('bg-gray-300', 'dark:bg-gray-600', 'text-gray-600', 'dark:text-gray-300');
+                listViewBtn.classList.remove('bg-primary', 'text-white');
+                listViewBtn.classList.add('bg-gray-300', 'dark:bg-gray-600', 'text-gray-600', 'dark:text-gray-300');
+                filterJobs();
+            });
+
+            listViewBtn.addEventListener('click', () => {
+                currentView = 'list';
+                listViewBtn.classList.add('bg-primary', 'text-white');
+                listViewBtn.classList.remove('bg-gray-300', 'dark:bg-gray-600', 'text-gray-600', 'dark:text-gray-300');
+                gridViewBtn.classList.remove('bg-primary', 'text-white');
+                gridViewBtn.classList.add('bg-gray-300', 'dark:bg-gray-600', 'text-gray-600', 'dark:text-gray-300');
+                filterJobs();
+            });
+
+            tagContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tag-filter')) {
+                    const allTagFilters = tagContainer.querySelectorAll('.tag-filter');
+                    allTagFilters.forEach(t => {
+                        t.classList.remove('bg-primary', 'text-white');
+                        t.classList.add('bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                    });
+                    e.target.classList.add('bg-primary', 'text-white');
+                    e.target.classList.remove('bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                    activeFilter = e.target.dataset.filter;
+                    filterJobs();
+                }
+            });
+
+            themeToggleBtn.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            });
+
+            addNewBtn.addEventListener('click', () => {
+                populateModalTags();
+                addModal.classList.remove('hidden');
+            });
+
+            modalCloseBtn.addEventListener('click', () => {
+                addModal.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                dataEntryContainer.classList.add('hidden');
+                modalTitle.textContent = "Admin Access";
+                loginMessage.textContent = "";
+                loginForm.reset();
+                addDataForm.reset();
+                modalSelectedTags.clear();
+                renderModalSelectedTags();
+            });
+
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                if (username === 'Bebell' && password === 'Bebell/25') {
+                    loginMessage.textContent = "Login successful!";
+                    loginMessage.className = 'text-center text-sm font-medium text-green-500';
+                    setTimeout(() => {
+                      loginForm.classList.add('hidden');
+                      dataEntryContainer.classList.remove('hidden');
+                      modalTitle.textContent = "Add New Entry";
+                    }, 500);
+                } else {
+                    loginMessage.textContent = "Invalid username or password.";
+                    loginMessage.className = 'text-center text-sm font-medium text-red-500';
+                }
+            });
+
+            addDataForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const inputTags = document.getElementById('new-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+                const finalTags = new Set([...modalSelectedTags, ...inputTags]);
+
+                const newEntry = {
+                    'Website': document.getElementById('website').value,
+                    'Description': document.getElementById('description').value,
+                    'Remote_Jobs': document.getElementById('remote-jobs').value,
+                    'Target_Audience': document.getElementById('target-audience').value,
+                    'Qualifications': document.getElementById('qualifications').value,
+                    'URL': document.getElementById('url').value.replace(/^(https?:\/\/)/, ''),
+                    'Reliability_Indicators': document.getElementById('reliability-indicators').value,
+                    'Potential_Risks': document.getElementById('potential-risks').value,
+                    'How_to_Get_Paid': document.getElementById('how-to-get-paid').value,
+                    'Application_Requirements': document.getElementById('application-requirements').value,
+                    'isRecommended': document.getElementById('is-recommended').checked,
+                    'Tags': Array.from(finalTags)
+                };
+                
+                processTags(newEntry); // Run auto-tagging as well
+                jobs.push(newEntry);
+                updateMainTagFilters(); // Update main filter list
+                filterJobs();
+                modalCloseBtn.click();
+            });
+
+            uploadCsvBtn.addEventListener('click', () => {
+                const file = csvUploadInput.files[0];
+                if (!file) {
+                    alert("Please select a CSV file to upload.");
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const csvData = event.target.result;
+                    const lines = csvData.split('\n');
+                    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                    for (let i = 1; i < lines.length; i++) {
+                        if (lines[i].trim() === '') continue;
+                        const values = lines[i].match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g).map(v => v.trim().replace(/"/g, ''));
+                        const newEntry = {};
+                        headers.forEach((h, index) => { newEntry[h.replace(/\s/g, '_')] = values[index] || ''; });
+                        processTags(newEntry);
+                        jobs.push(newEntry);
+                    }
+                    updateMainTagFilters();
+                    filterJobs();
+                    modalCloseBtn.click();
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            
+            updateMainTagFilters();
+            filterJobs();
+            setupEventListeners();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
