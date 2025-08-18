@@ -74,6 +74,13 @@
             display: grid;
             grid-template-columns: 1fr;
         }
+
+.dark .text-black-in-dark {
+    color: #000 !important; /* Force black in dark mode */
+}
+
+
+        
         
         @media (min-width: 768px) {
             .list-view-card {
@@ -169,16 +176,23 @@
 
     </div>
 
+
+
+    
     <!-- Floating Add New Button -->
-    <button id="add-new-btn" class="fixed bottom-8 right-8 p-4 bg-primary text-white rounded-full shadow-lg z-50 transition-transform transform hover:scale-110 focus:outline-none">
+    <button id="add-new-btn" class="fixed bottom-4 right-4 p-3 bg-primary text-white rounded-full shadow-lg z-50 transition-transform transform hover:scale-110 focus:outline-none">
         <i data-lucide="plus" class="w-8 h-8"></i>
     </button>
+
+
+    
 
     <!-- Modal for adding new data -->
     <div id="add-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-4">
-                <h2 id="modal-title" class="text-2xl font-bold dark:text-white">Acceso de Administrador</h2>
+                <h2 id="modal-title" class="text-2xl font-bold text-black-in-dark">Acceso de Administrador</h2>
+             
                 <button id="modal-close-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
@@ -198,10 +212,12 @@
                 <p id="login-message" class="text-center text-sm font-medium"></p>
             </form>
 
+            
             <!-- Data Entry Form (hidden by default) -->
             <div id="data-entry-container" class="hidden">
                 <form id="add-data-form" class="space-y-4">
-                    <h3 class="text-xl font-bold dark:text-white">Añadir Nueva Entrada</h3>
+                    <h3 class="text-xl font-bold text-black-in-dark">Agrega un Nuevo Directorio de Búsqueda:👇</h3>
+                 
                     <div>
                         <label for="website" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sitio Web</label>
                         <input type="text" id="website" class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
@@ -257,6 +273,9 @@
                     </div>
                     <button type="submit" class="w-full py-2 px-4 rounded-md text-white bg-primary hover-bg-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300">Añadir Entrada</button>
                 </form>
+
+
+                
 
                 <div class="my-6 text-center text-gray-500 dark:text-gray-400">
                     <p>o</p>
